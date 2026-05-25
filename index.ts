@@ -1,78 +1,56 @@
-const fs = require("fs");
-const http = require("http");
-const path = require("path");
-const WorldReader = require("./WorldReader");
-//Test_Level2__dont_play_.dat
-const PORT = 3000;
-const LEVEL_PATH = "file8.dat";
+import * as fs from 'fs';
+import * as path from 'path';
+import LevelReader from './LevelReader.js';
+import LevelWriter from './LevelWriter.js';
+import { CarID, ObjectType } from './Types.js';
+import { Verify } from 'crypto';
 
-// 1. Helper function to read and parse the live level file
-function getParsedMapData() {
-    
-    const buffer = fs.readFileSync(LEVEL_PATH);
-    const world = new World(buffer);
-    return {
-        success: true,
-        levelBounds: {
-            min: world.minPos,
-            max: world.maxPos
-        },
-        objects: world.placedObjects,
-        paths: world.paths
-    };
-}
-function decodeMapDataNormalizedRaw(rawData) {
-    const decodeAngle = (val) => {
-        return Number(((val / 65536) * 360).toFixed(2));
-    };
-    const decodeCoord = (vec3, coord) => {
-        return Number(((vec3[coord] / 65536) * (rawData.levelBounds.max[coord] - rawData.levelBounds.min[coord])).toFixed(4))
+function binaryToHexFile(inputBinaryPath: string, outputTxtPath: string): string {
+    try {
+        // 1. Read the raw binary file into a Buffer
+        const binaryBuffer = fs.readFileSync(inputBinaryPath)!;
+       
+
+        // 2. Convert the entire buffer into an array of 2-character hex strings
+        const hexArray: string[] = [];
+        for (let i = 0; i < binaryBuffer.length; i++) {
+            // Convert byte to hex, ensure it's 2 characters long (e.g., 0 -> '00')
+            const hexByte = binaryBuffer[i]!.toString(16).padStart(2, '0');
+            hexArray.push(hexByte);
+        }
+
+        // 3. Join them with a space to make it clean and scannable
+        const spaceSeparatedHex = hexArray.join(' ');
+
+        // 4. Save the hex text string to a file
+        fs.writeFileSync(outputTxtPath, spaceSeparatedHex, 'utf-8');
+
+        console.log(`Successfully converted binary to hex string!`);
+        console.log(`Total Bytes Processed: ${binaryBuffer.length}`);
+        console.log(`Saved hex text file to: ${outputTxtPath}`);
+
+        return spaceSeparatedHex;
+
+    } catch (error) {
+        console.error(`Error converting binary to hex:`, error);
+        throw error;
     }
-
-    const readableData = JSON.parse(JSON.stringify(rawData));
-    
-    readableData.paths = readableData.paths.map(obj => {
-        return {
-            x: decodeCoord(obj, "x"),
-            y: decodeCoord(obj, "y"),
-            z: decodeCoord(obj, "z"),
-            
-            pitch: decodeAngle(obj.pitch),
-            yaw: decodeAngle(obj.yaw),
-            roll: decodeAngle(obj.roll),
-            
-            groupIndex: obj.groupIndex
-        };
-    });
-
-    readableData.objects = readableData.objects.map(obj => {
-        return {
-            x: decodeCoord(obj, "x"),
-            y: decodeCoord(obj, "y"),
-            z: decodeCoord(obj, "z"),
-            
-            pitch: decodeAngle(obj.pitch),
-            yaw: decodeAngle(obj.yaw),
-            roll: decodeAngle(obj.roll),
-            
-            objectTypeID: obj.objectTypeID,
-            colorID: obj.colorID,
-            sizeID: obj.sizeID
-        };
-    });
-
-    return readableData;
 }
 
-const server =http.createServer()
-server.on("request", (req, res) => {
-    console.log("A")
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    
-    const rawJson = getParsedMapData()
-    let stuff = JSON.stringify(decodeMapDataNormalizedRaw(rawJson))
-    fs.writeFileSync("map.json", stuff)
-    
-    res.end(stuff);
+// === Execution Example ===
+const levelDat = "./Levels/level1.dat"
+const newLevelName = "New Track 76"
+const levelBuffer = Buffer.from(fs.readFileSync(levelDat))!
+const level = LevelReader.read(levelBuffer)!
+level.levelName = newLevelName
+level.carID = CarID.STOCK
+level.skyID = 2
+level.bakedObjects.map((obj) => {
+    obj.objectTypeID = ObjectType.CHECKPOINT
 })
-server.listen(PORT);
+
+const buff = LevelWriter.write(level)!
+fs.writeFileSync("./Levels/output_map.map", buff)
+
+
+binaryToHexFile("./Levels/output_map.map",'level_hex.txt');

@@ -1,7 +1,14 @@
 // Little Endian
-const KEY = 0xFB
-class FileReader {
-   constructor(buffer, cipherValue = 0, xorChecksumVal = 0) {
+import { CIPHER_KEY } from "./Globals.js";
+export default class FileReader {
+    private readonly bytesBuffer: Buffer
+    private bytesRead: number
+    private cipherValue: number
+    private xorChecksumVal: number
+    private addChecksumVal: number
+    private useRollingCipher: boolean
+    private useCheckSum: boolean
+    constructor(buffer: Buffer, cipherValue = 0, xorChecksumVal = 0) {
         this.bytesBuffer = buffer;
         this.bytesRead = 0;
         this.cipherValue = cipherValue;
@@ -10,19 +17,21 @@ class FileReader {
         this.useRollingCipher = true;
         this.useCheckSum = true;
     }
-    toChar = (value) => (value << 24) >> 24;
-    toUChar = (value) => value & 0xFF;
-    toUInt = (value) => value >>> 0;
-    readBytesGeneric(size)
+    toChar = (value: number) => (value << 24) >> 24;
+    toUChar = (value: number) => value & 0xFF;
+    toUInt = (value: number) => value >>> 0;
+    private readBytesGeneric(size: number)
     {
-        let readOffset = this.bytesRead;
-        if (readOffset + size > this.bytesBuffer.length) {
+        if (this.bytesRead + size > this.bytesBuffer.length) {
             throw new Error("Read out of bounds");
         }
 
         let decryptedValue = 0;
         for (let byteNum = 0; byteNum < size; byteNum++) {
             const encryptedByte = this.bytesBuffer[this.bytesRead];
+            if (encryptedByte === undefined)
+                throw new Error(`Unassigned byte at ${this.bytesRead}`)
+
             let decryptedByte = encryptedByte;
 
             if (this.useRollingCipher) {
@@ -31,7 +40,7 @@ class FileReader {
                 const sub = currentSeed & 0xFF;
                 decryptedByte = this.toUChar((encryptedByte ^ key) - sub);
                 
-                this.cipherValue = this.toUInt(currentSeed + KEY);
+                this.cipherValue = this.toUInt(currentSeed + CIPHER_KEY);
             }
             if (this.useCheckSum) {
                 this.xorChecksumVal = this.toUChar(decryptedByte ^ this.xorChecksumVal);
@@ -42,18 +51,19 @@ class FileReader {
         }
         return this.toUInt(decryptedValue);
     }
-    readU16()   { return this.readBytesGeneric(2) }
-    readU32()   { return this.readBytesGeneric(4) }
-    readS32()   { return this.readBytesGeneric(4) }
+    readU8()    { return this.readBytesGeneric(1); }
+    readU16()   { return this.readBytesGeneric(2); }
+    readU32()   { return this.readBytesGeneric(4); }
+    readS32()   { return this.readBytesGeneric(4); }
     readFloat() {
-        const uint32 = this.readU32()
+        const uint32 = this.readU32();
         const buffer = new ArrayBuffer(4);
         const view = new DataView(buffer);
-        view.setUint32(0, uint32);
-        const float32 = view.getFloat32(0); 
-        return float32
+        view.setUint32(0, uint32, true);
+        const float32 = view.getFloat32(0, true); 
+        return float32;
     }
-    readString(stringLength) {
+    readString(stringLength: number) {
         if (stringLength <= 0) 
             return "";
 
@@ -66,11 +76,21 @@ class FileReader {
         }
         return decryptedString;
     }
-    skip(bytesToSkip)
+    skip(bytesToSkip: number)
     {
         if (bytesToSkip <= 0)
-            return
-        this.readBytesGeneric(bytesToSkip)
+            return;
+        this.readBytesGeneric(bytesToSkip);
+    }
+    setRollingCipher(state: boolean)
+    {
+        this.useRollingCipher = state;
+    }
+    setCheckSum(state: boolean)
+    {
+        this.useCheckSum = state
+    }
+    public getBytesRead(): number {
+        return this.bytesRead
     }
 }
-module.exports = FileReader

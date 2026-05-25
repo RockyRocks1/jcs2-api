@@ -17,10 +17,10 @@ export default class LevelWriter {
 
     private level: Level;
     private fileWriter: FileWriter;
-    private constructor(level: Level)
-    {
+    private constructor(level: Level) {
         this.level = level;
         this.fileWriter = new FileWriter(0x10000, INITIAL_CIPHER_VALUE, INITIAL_CHECKSUM_VALUE)
+        this.fileWriter.addThatHackyThing = true
     }
     private compile(): Buffer | undefined {
         if (!this.compileHeader())

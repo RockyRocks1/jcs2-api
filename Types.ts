@@ -38,3 +38,9 @@ export interface BakedObject {
     colorID: number;
     sizeID: number;
 }
+
+export interface GlobalSeeds {
+    seedA: number;
+    seedB: number;
+    seedC: number;
+}

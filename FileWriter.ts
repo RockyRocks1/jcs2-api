@@ -8,6 +8,7 @@ export default class FileWriter {
     private addChecksumVal: number
     private useRollingCipher: boolean
     private useCheckSum: boolean
+    public addThatHackyThing: boolean = false
     constructor(bytesToAllocate = 0x10000, cipherValue = 0, xorChecksumVal = 0) {
         this.bytesBuffer = Buffer.alloc(bytesToAllocate);
         this.bytesWritten = 0;
@@ -43,9 +44,9 @@ export default class FileWriter {
             if (this.useCheckSum) {
                 this.xorChecksumVal = this.toUChar(encryptedByte ^ this.xorChecksumVal);
                 this.addChecksumVal = this.toUInt(this.addChecksumVal + this.xorChecksumVal);
+                if (this.addThatHackyThing && Math.abs(this.bytesWritten - 0x7C)  == 0) // for some awful, inexplicable reason, the byte is always problematic when writing a custom level
+                    encryptedByte += 0x3
             }
-            if (Math.abs(this.bytesWritten - 0x7C)  == 0)
-                encryptedByte += 0x3
             this.bytesBuffer[this.bytesWritten] = encryptedByte;
             this.bytesWritten++;
         }
@@ -115,6 +116,9 @@ export default class FileWriter {
     }
     setCheckSum(state: boolean) {
         this.useCheckSum = state
+    }
+    getBytesWritten(): number {
+        return this.bytesWritten
     }
     getFinalizedBuffer(): Buffer {
         return this.bytesBuffer.subarray(0, this.bytesWritten);

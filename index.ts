@@ -1,56 +1,44 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import  fs from 'fs';
+import TARequest, { TASendUserLevelBody } from './TARequest.js';
+import TARequestWriter from './TARequestWriter.js';
+import { ALT_ENDPOINT, GAME_ID, MAIN_ENDPOINT, TA_DOMAIN, TA_USERAGENT } from './Globals.js';
 import LevelReader from './LevelReader.js';
 import LevelWriter from './LevelWriter.js';
-import { CarID, ObjectType } from './Types.js';
-import { Verify } from 'crypto';
-
-function binaryToHexFile(inputBinaryPath: string, outputTxtPath: string): string {
-    try {
-        // 1. Read the raw binary file into a Buffer
-        const binaryBuffer = fs.readFileSync(inputBinaryPath)!;
-       
-
-        // 2. Convert the entire buffer into an array of 2-character hex strings
-        const hexArray: string[] = [];
-        for (let i = 0; i < binaryBuffer.length; i++) {
-            // Convert byte to hex, ensure it's 2 characters long (e.g., 0 -> '00')
-            const hexByte = binaryBuffer[i]!.toString(16).padStart(2, '0');
-            hexArray.push(hexByte);
-        }
-
-        // 3. Join them with a space to make it clean and scannable
-        const spaceSeparatedHex = hexArray.join(' ');
-
-        // 4. Save the hex text string to a file
-        fs.writeFileSync(outputTxtPath, spaceSeparatedHex, 'utf-8');
-
-        console.log(`Successfully converted binary to hex string!`);
-        console.log(`Total Bytes Processed: ${binaryBuffer.length}`);
-        console.log(`Saved hex text file to: ${outputTxtPath}`);
-
-        return spaceSeparatedHex;
-
-    } catch (error) {
-        console.error(`Error converting binary to hex:`, error);
-        throw error;
-    }
-}
-
-// === Execution Example ===
-const levelDat = "./Levels/level1.dat"
-const newLevelName = "New Track 76"
-const levelBuffer = Buffer.from(fs.readFileSync(levelDat))!
+import { CarID, ObjectType, SkyID } from './Types.js';
+let levelBuffer = Buffer.from(fs.readFileSync("./Levels/level2.dat")) as Buffer
 const level = LevelReader.read(levelBuffer)!
-level.levelName = newLevelName
-level.carID = CarID.STOCK
-level.skyID = 2
-level.bakedObjects.map((obj) => {
-    obj.objectTypeID = ObjectType.CHECKPOINT
+level.levelName = "hoopTest2"
+level.carID = CarID.COMPACT
+level.bakedObjects.map((value) => {
+    if (value.objectTypeID != ObjectType.CHECKPOINT)
+        value.objectTypeID = ObjectType.HOOP
 })
+levelBuffer = LevelWriter.write(level)!
+console.log(LevelReader.read(levelBuffer))
+fs.writeFileSync("./Levels/eliminate.dat", levelBuffer)
+console.log(levelBuffer.length)
+const things = new TASendUserLevelBody()
+things.levelName = "hoopTest2"
+things.sessionToken = "tdc2ZfDlKD1XU2hh7pxrcf4TuV5HjSPrklhTMqzWn0J5aeSTnfMg7rzGOixVcl2h_lJz729v2FgNc18sqx9smQ"
+things.userID = "20757838"
+things.attributes = [CarID.COMPACT, 0, 4]
+things.mapBuffer = levelBuffer
+const bodyBuffer = things.createBuffer()!
 
-const buff = LevelWriter.write(level)!
-fs.writeFileSync("./Levels/output_map.map", buff)
+const req = new TARequest(GAME_ID, "/sendUserLevel.php", bodyBuffer)
 
+let re = TARequestWriter.write(req)
 
-binaryToHexFile("./Levels/output_map.map",'level_hex.txt');
+const response = await fetch(TA_DOMAIN+ALT_ENDPOINT, {
+    method: 'POST',
+    headers: {
+        "Content-Type": "application/octet-stream",
+        "User-Agent": TA_USERAGENT,
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "Accept-Language": "en-us",
+        "Accept-Encoding": "gzip, deflate, br"
+    },
+    body: re!
+});
+console.log(response)

@@ -6,7 +6,7 @@ function mask24(value: number) {
 }
 export default class RequestWriter {
     public static write(request: TARequest, globalSeeds: GlobalSeeds = {seedA: 1, seedB: 2, seedC: 3}): Buffer | undefined {
-        const worker = new RequestWriter(request, globalSeeds)
+        const worker = new RequestWriter(request, globalSeeds);
         return worker.compile();
     }
     
@@ -15,14 +15,14 @@ export default class RequestWriter {
     private fileWriter: FileWriter;
 
     private constructor(request: TARequest, globalSeeds: GlobalSeeds) {
-        this.request = request
-        this.globalSeeds = globalSeeds
-        this.fileWriter = new FileWriter(0x10000)
-        this.fileWriter.setCheckSum(false)
-        this.fileWriter.setRollingCipher(false)
+        this.request = request;
+        this.globalSeeds = globalSeeds;
+        this.fileWriter = new FileWriter(0x10000);
+        this.fileWriter.setCheckSum(false);
+        this.fileWriter.setRollingCipher(false);
     }
     private compile(): Buffer | undefined {
-        const bodyString = this.request.body
+        const bodyString = this.request.body;
         const endpointString = this.request.endpoint;
         const fileWriter = this.fileWriter;
         const oldGlobalSeeds = { ...this.globalSeeds };
@@ -30,17 +30,17 @@ export default class RequestWriter {
             seedC: mask24(this.globalSeeds.seedC + 0x11),
             seedA: mask24(this.globalSeeds.seedA + 0x2B),
             seedB: mask24(this.globalSeeds.seedB + 0x09)
-        }
-        fileWriter.writeString("rx")
-        fileWriter.writeU8(sesSeeds.seedC)
-        fileWriter.writeString("b")
-        fileWriter.writeU8(sesSeeds.seedA)
-        fileWriter.writeString("5")
-        fileWriter.writeU8(sesSeeds.seedB)
-        fileWriter.writeString("g")
-        fileWriter.writeU8(this.request.gameID)
-        fileWriter.writeU32(1)
-        console.log(endpointString.length)
+        };
+        fileWriter.writeString("rx");
+        fileWriter.writeU8(sesSeeds.seedC);
+        fileWriter.writeString("b");
+        fileWriter.writeU8(sesSeeds.seedA);
+        fileWriter.writeString("5");
+        fileWriter.writeU8(sesSeeds.seedB);
+        fileWriter.writeString("g");
+        fileWriter.writeU8(this.request.gameID);
+        fileWriter.writeU32(1);
+        console.log(endpointString.length);
         const endpointLenBytes: [number, number, number, number] = [
             fileWriter.toUChar(endpointString.length),
             fileWriter.toUChar(endpointString.length >> 8),
@@ -58,7 +58,6 @@ export default class RequestWriter {
         let uVar9 = mask24(oldGlobalSeeds.seedC + 0x8205);
         const uVar3 = mask24(endpointLenBytes[2] + sesSeeds.seedB + 0x61bd3);
 
-        // Write Byte 0x0E
         sesSeeds.seedC = mask24(endpointLenBytes[1] ^ mask24(oldGlobalSeeds.seedC + 0x208e) ^ sesSeeds.seedC ^ sesSeeds.seedA);
         fileWriter.writeU8(sesSeeds.seedC);
 
@@ -128,10 +127,10 @@ export default class RequestWriter {
             
             fileWriter.writeU8(encryptedBodyChar);
         }
-        // --- 6. Footer ---
+        
         fileWriter.writeU8(sesSeeds.seedA);
         fileWriter.writeU8(sesSeeds.seedC);
 
-        return fileWriter.getFinalizedBuffer()
+        return fileWriter.getFinalizedBuffer();
     }
 }

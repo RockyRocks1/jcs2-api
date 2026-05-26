@@ -22,11 +22,9 @@ export default class LevelExporter {
             bakedObjects: level.bakedObjects.map(obj => ({
                 position: obj.position,
                 rotation: obj.rotation,
-                metaBytes: {
-                    objectTypeID: obj.objectTypeID,
-                    rawColorID: obj.colorID,
-                    rawSizeID: obj.sizeID
-                }
+                objectTypeID: obj.objectTypeID,
+                colorID: obj.colorID,
+                sizeID: obj.sizeID
             }))
         };
 

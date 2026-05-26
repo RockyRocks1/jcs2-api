@@ -29,8 +29,8 @@ export default class LevelWriter {
             return;
         if (!this.compileBakedObjects())
             return;
-        this.fileWriter.writeCheckSum()
-        return this.fileWriter.getFinalizedBuffer()
+        this.fileWriter.writeCheckSum();
+        return this.fileWriter.getFinalizedBuffer();
     }
     private compileHeader(): boolean {
         this.fileWriter.setRollingCipher(false);
@@ -67,11 +67,11 @@ export default class LevelWriter {
         return true;
     }
     private compilePathNodes(): boolean {
-        const levelSpan = this.level.levelSpan
-        const minPos = this.level.minPos
+        const levelSpan = this.level.levelSpan;
+        const minPos = this.level.minPos;
 
         let globalSequenceIndex = 0;
-        const u16ValuesToWrite = []
+        const u16ValuesToWrite = [];
         let previousRawIndex = -1;
         for (const path of this.level.paths) {
             for (let pathNodeIndex = 0; pathNodeIndex < path.length; pathNodeIndex++) {
@@ -87,11 +87,10 @@ export default class LevelWriter {
                 if (isStartingNode) {
                     previousRawIndex = finalIndex; 
                     finalIndex |= STARTING_NODE_FLAG;
-                } else if (isEndingNode && previousRawIndex !== -1) {
+                } else if (isEndingNode && previousRawIndex !== -1) 
                     finalIndex = previousRawIndex;
-                } else {
+                else 
                     previousRawIndex = finalIndex;
-                }
                 
                 u16ValuesToWrite.push(
                     coordToU16(node.position.x, levelSpan, minPos, "x"),
@@ -131,12 +130,12 @@ export default class LevelWriter {
                 bakedObject.objectTypeID,
                 bakedObject.colorID,
                 bakedObject.sizeID
-            ]
+            ];
             for (const u16 of u16ValuesToWrite) 
                 this.fileWriter.writeU16(u16);
             for (const u8 of u8ValuesToWrite) 
                 this.fileWriter.writeU8(u8);
         }
-        return true
+        return true;
     }
 }

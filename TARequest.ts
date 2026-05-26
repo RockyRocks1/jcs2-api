@@ -1,7 +1,7 @@
 import FileWriter from "./FileWriter.js";
 import { GAME_ID } from "./Globals.js";
 import type Level from "./Level.js";
-import type { CarID } from "./Types.js";
+import { CarID, SkyID } from "./Types.js";
 
 export default class TARequest {
     public gameID: number
@@ -14,14 +14,15 @@ export default class TARequest {
     }
 }
 
-
 const magicUserLevelBodyHeader = 0x3e9;
 export class TASendUserLevelBody {
     public gameID: number = GAME_ID;
     public userID: string = "";
     public sessionToken: string = "";
     public levelName: string = "";
-    public attributes: [CarID, number, number] = [0, 0, 0];
+    public carID: CarID = CarID.BUGGY;
+    public mysteryNumber: number = 0
+    public skyID: SkyID = SkyID.SKY5;
     public mapBuffer?: Buffer;
     
     createBuffer(): Buffer | undefined {
@@ -44,7 +45,9 @@ export class TASendUserLevelBody {
         fileWriter.writeU32(Buffer.byteLength(this.levelName, 'utf8'));
         fileWriter.writeString(this.levelName);
 
-        this.attributes.forEach((attribute) => fileWriter.writeU32(attribute));
+        fileWriter.writeU32(this.carID)
+        fileWriter.writeU32(this.mysteryNumber)
+        fileWriter.writeU32(this.skyID)
 
         fileWriter.writeU32(this.mapBuffer.byteLength);
         for (let i = 0; i < this.mapBuffer.length; i++) {
@@ -57,6 +60,7 @@ export class TASendUserLevelBody {
     }
     getSomeInfoFromLevel(level: Level) {
         this.levelName = level.levelName;
-        this.attributes = [level.carID, 0, 0];
+        this.carID = level.carID
+        this.skyID = level.skyID
     }
 }

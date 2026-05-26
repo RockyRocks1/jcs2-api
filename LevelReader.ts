@@ -61,9 +61,9 @@ export default class LevelReader {
         level.timestamp = this.fileReader.readString(19);
         this.fileReader.skip(13);
 
-        const levelNameLength = this.fileReader.readU8() 
+        const levelNameLength = this.fileReader.readU8();
         level.levelName = this.fileReader.readString(levelNameLength);
-        level.skyID = this.fileReader.readU8() // Unknown byte? sky?
+        level.skyID = this.fileReader.readU8();
         const paddingBytesToSkip = MAX_LEVEL_NAME_LENGTH - levelNameLength;
         this.fileReader.skip(paddingBytesToSkip);
 
@@ -81,8 +81,8 @@ export default class LevelReader {
     }
     private parsePathNodes(level: Level): boolean
     {
-        const levelSpan = level.levelSpan
-        const minPos = level.minPos
+        const levelSpan = level.levelSpan;
+        const minPos = level.minPos;
         const maxNodeIndex = this.fileReader.readU32();
 
         let lastNodeIndex = -1;
@@ -113,14 +113,14 @@ export default class LevelReader {
             }
 
 
-            lastNodeIndex = pathNode.nodeIndex as number
+            lastNodeIndex = pathNode.nodeIndex!;
         }
-        return true
+        return true;
     }
     private parseBakedObjects(level: Level): boolean
     {
-        const levelSpan = level.levelSpan
-        const minPos = level.minPos
+        const levelSpan = level.levelSpan;
+        const minPos = level.minPos;
         const bakedObjectCount = this.fileReader.readU32();
 
         for (let objectIndex = 0; objectIndex < bakedObjectCount; objectIndex++) {
@@ -139,8 +139,8 @@ export default class LevelReader {
                 colorID: this.fileReader.readU8(),
                 sizeID: this.fileReader.readU8(),
             }
-            level.bakedObjects.push(bakedObject)
+            level.bakedObjects.push(bakedObject);
         }
-        return true
+        return true;
     }
 }

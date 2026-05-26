@@ -10,7 +10,7 @@ let levelBuffer = Buffer.from(fs.readFileSync("./Levels/stolen.dat")) as Buffer
 const level = LevelReader.read(levelBuffer)!
 level.levelName = "hoopTest2"
 level.carID = CarID.COMPACT
-LevelExporter.exportToJSON("./level.json", level)
+LevelExporter.exportToJSON("./Levels/level.json", level)
 import http from 'http';
 
 const PORT = 3000;
@@ -22,7 +22,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     
     // Define the JSON data
-    const responseData = fs.readFileSync("./level.json")
+    const responseData = fs.readFileSync("./Levels/level.json")
     
     // Send the JSON response (must be stringified)
     res.end(responseData);
